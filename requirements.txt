@@ -6,6 +6,7 @@ adafruit-circuitpython-ssd1306==2.12.0
 Adafruit-PlatformDetect==3.14.2
 Adafruit-PureIO==1.1.9
 gps==3.19
+picamera==1.13
 pkg-resources==0.0.0
 pyftdi==0.53.1
 pyserial==3.5

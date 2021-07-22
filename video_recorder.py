@@ -7,12 +7,14 @@
 
 import picamera
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import threading
 from gps import *
 import os
 from shutil import copy2
+from digitalio import DigitalInOut, Direction, DriveMode
+import board
 
 # Video length in secods
 video_length = 45
@@ -51,7 +53,7 @@ def capture_thread():
             now = datetime.now() #
             timestamp = now.strftime("%Y%m%d-%H%M%S")
             camera.capture(f"images/img_{timestamp}.jpg")
-            copy2(f"images/img{timestamp}.jpg", "images/latest.jpg")
+            copy2(f"images/img_{timestamp}.jpg", "images/latest.jpg")
 
 
 def gps_thread():
@@ -76,6 +78,33 @@ def get_gps_string():
         return f"Lat: {gps_info[0]:.4f}* Lon: {gps_info[1]:.4f}* Alt: {(gps_info[2] * 3.28084):.0f}ft"
 
 def sstv_thread():
+    # Button C
+    ptt = DigitalInOut(board.D21)
+    ptt.direction = Direction.OUTPUT
+    ptt.drive_mode = DriveMode.PUSH_PULL
+    while True:
+        # Enter wait info here
+        logging.error("SSTV: Converting image to .wav file")
+        os.system("/usr/bin/convert images/latest.jpg -resize 320x240 sstv_image320.jpg")
+
+        sstv_text = f"PHAB-17 / {(gps_info[2] * 3.28084):.0f}ft / KE5GDB"
+
+        os.system(f"/usr/bin/convert  sstv_image320.jpg -gravity south \
+          -stroke '#000C' -strokewidth 2 -pointsize 20 -annotate 0 '{sstv_text}' \
+          -stroke  none   -fill white    -pointsize 20 -annotate 0 '{sstv_text}' \
+          sstv_image.jpg")
+        os.system("/usr/local/bin/pisstv -r 22050 -p m2 sstv_image.jpg")
+
+        while datetime.now().minute % 3 != 0:
+            time.sleep(0.5)
+
+        logging.error("SSTV: Transmitting")
+        ptt.value = 1
+        time.sleep(1)
+        os.system("aplay sstv_image.jpg.wav")
+        time.sleep(0)
+        ptt.value = 0
+        logging.error("SSTV: Done transmitting")
 
 
 if __name__ == "__main__":
@@ -84,7 +113,7 @@ if __name__ == "__main__":
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
     threads=[]
-    threads.append(threading.Thread(target=capture_thread, daemon=True))
+    #threads.append(threading.Thread(target=capture_thread, daemon=True))
     threads.append(threading.Thread(target=gps_thread, daemon=True))
     threads.append(threading.Thread(target=sstv_thread, daemon=True))
 
