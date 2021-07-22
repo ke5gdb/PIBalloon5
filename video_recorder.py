@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 #
-# KE5GDB
+# KE5GDB 2021
 # PiBalloonV image and video recorder
 #
 
@@ -11,6 +11,8 @@ from datetime import datetime
 import logging
 import threading
 from gps import *
+import os
+from shutil import copy2
 
 # Video length in secods
 video_length = 45
@@ -48,7 +50,9 @@ def capture_thread():
             time.sleep(2)
             now = datetime.now() #
             timestamp = now.strftime("%Y%m%d-%H%M%S")
-            camera.capture('images/img_{}.jpg'.format(timestamp))
+            camera.capture(f"images/img_{timestamp}.jpg")
+            copy2(f"images/img{timestamp}.jpg", "images/latest.jpg")
+
 
 def gps_thread():
     global gps_info
@@ -62,7 +66,6 @@ def gps_thread():
                 gps_info[2] = getattr(report,'alt','NaN')
                 gps_info[3] = getattr(report,'speed','NaN')
                 gps_info[4] = getattr(report,'climb','NaN')
-            time.sleep(.1)
         except:
             logging.error("GPS error!")
 
@@ -72,6 +75,9 @@ def get_gps_string():
     else:
         return f"Lat: {gps_info[0]:.4f}* Lon: {gps_info[1]:.4f}* Alt: {(gps_info[2] * 3.28084):.0f}ft"
 
+def sstv_thread():
+
+
 if __name__ == "__main__":
     format = "%(asctime)s: %(message)s"
 
@@ -80,6 +86,7 @@ if __name__ == "__main__":
     threads=[]
     threads.append(threading.Thread(target=capture_thread, daemon=True))
     threads.append(threading.Thread(target=gps_thread, daemon=True))
+    threads.append(threading.Thread(target=sstv_thread, daemon=True))
 
     for thread in threads:
         thread.start()
