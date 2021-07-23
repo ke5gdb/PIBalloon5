@@ -1,0 +1,13 @@
+[Unit]
+Description=PiBalloon5 Video Recorder and SSTV service
+After=syslog.target gpsd.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/piballoon
+ExecStart=/home/pi/piballoon/.venv/bin/python /home/pi/piballoon/video_recorder.py --serve-in-foreground
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

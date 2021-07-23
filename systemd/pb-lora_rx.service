@@ -1,0 +1,13 @@
+[Unit]
+Description=PiBalloon5 LoRa Receiver
+After=syslog.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/piballoon
+ExecStart=/home/pi/piballoon/.venv/bin/python /home/pi/piballoon/lora_rx.py --serve-in-foreground
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

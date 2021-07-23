@@ -19,7 +19,7 @@ import board
 # Video length in secods
 video_length = 45
 
-gps_info = [0.0, 0.0, 'NaN', 'NaN', 'NaN']
+gps_info = [0.0, 0.0, 0.0, 'NaN', 'NaN']
 
 def capture_thread():
     with picamera.PiCamera() as camera:
@@ -65,14 +65,14 @@ def gps_thread():
             if report['class'] == 'TPV':
                 gps_info[0] = getattr(report,'lat',0.0)
                 gps_info[1] = getattr(report,'lon',0.0)
-                gps_info[2] = getattr(report,'alt','NaN')
+                gps_info[2] = getattr(report,'alt', 0.0)
                 gps_info[3] = getattr(report,'speed','NaN')
                 gps_info[4] = getattr(report,'climb','NaN')
         except:
             logging.error("GPS error!")
 
 def get_gps_string():
-    if gps_info[2] == "NaN":
+    if gps_info[2] == 0.0:
         return "No GPS lock!"
     else:
         return f"Lat: {gps_info[0]:.4f}* Lon: {gps_info[1]:.4f}* Alt: {(gps_info[2] * 3.28084):.0f}ft"
@@ -87,11 +87,11 @@ def sstv_thread():
         logging.error("SSTV: Converting image to .wav file")
         os.system("/usr/bin/convert images/latest.jpg -resize 320x240 sstv_image320.jpg")
 
-        sstv_text = f"PHAB-17 / {(gps_info[2] * 3.28084):.0f}ft / KE5GDB"
+        sstv_text = f"RWK/PHAB-17 / {(gps_info[2] * 3.28084):.0f}ft / KE5GDB"
 
         os.system(f"/usr/bin/convert  sstv_image320.jpg -gravity south \
-          -stroke '#000C' -strokewidth 2 -pointsize 20 -annotate 0 '{sstv_text}' \
-          -stroke  none   -fill white    -pointsize 20 -annotate 0 '{sstv_text}' \
+          -stroke '#000C' -strokewidth 2 -pointsize 17 -annotate 0 '{sstv_text}' \
+          -stroke  none   -fill white    -pointsize 17 -annotate 0 '{sstv_text}' \
           sstv_image.jpg")
         os.system("/usr/local/bin/pisstv -r 22050 -p m2 sstv_image.jpg")
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
 
     threads=[]
-    #threads.append(threading.Thread(target=capture_thread, daemon=True))
+    threads.append(threading.Thread(target=capture_thread, daemon=True))
     threads.append(threading.Thread(target=gps_thread, daemon=True))
     threads.append(threading.Thread(target=sstv_thread, daemon=True))
 
