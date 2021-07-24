@@ -23,15 +23,16 @@ gps_info = [0.0, 0.0, 0.0, 'NaN', 'NaN']
 
 def capture_thread():
     with picamera.PiCamera() as camera:
-        for i in range(3):
+        while True:
             # Get timestamp for filename
             now = datetime.now() #
             timestamp = now.strftime("%Y%m%d-%H%M%S")
-            
+
             logging.info("capture: starting video capture {}".format(timestamp))
 
             # Record video
             camera.resolution = (1920, 1080)
+            camera.rotation = 180
             camera.annotate_background = picamera.Color('black')
             video_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             camera.annotate_text = f"KE5GDB - PiBalloon5 - {video_timestamp}\n{get_gps_string()}"
@@ -41,13 +42,14 @@ def capture_thread():
                 video_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 camera.annotate_text = f"KE5GDB - PiBalloon5 - {video_timestamp}\n{get_gps_string()}"
                 camera.wait_recording(0.2)
-            
+
             camera.stop_recording()
 
             logging.info("capture: starting image capture {}".format(timestamp))
 
             # Capture image
             camera.resolution = (3280, 2464)
+            camera.rotation = 180
             camera.start_preview()
             time.sleep(2)
             now = datetime.now() #
